@@ -876,7 +876,7 @@ gtm.star <- function(
     dist.0[[s]] <- 1 - dist.01[[s]] - dist.02[[s]] - dist.12[[s]]
     nams <- rownames(y.list[[s]])
     for(i in 2:m[s]) {
-      i.ind= <- which(tissues == nams[i]) 
+      i.ind <- which(tissues == nams[i]) 
       for (j in 1:(i-1)) {
         j.ind <- which(tissues == nams[j])
         p.vec <- c(
@@ -1105,7 +1105,7 @@ logmlk.3.truncated <- function(
       if (!is.finite(x1) | x1 > 1) x1 <- 1 
       stopifnot(x0 < x1)
       if (independent) {
-        yy <- matrix(y[k,], ncol = 2, byro w =FALSE)
+        yy <- matrix(y[k,], ncol = 2, byrow =FALSE)
       } else {
         yy <- matrix(c(sum(y[k, 1]), sum(y[k, 2])), nrow = 1)
       }
@@ -1257,7 +1257,12 @@ count.states<-function(m,model.strong.ase=TRUE) {
 #'   \item{log.sum.prior.h1}{is the log of the sum of priors over all heterog states that have no 0}
 #' }
 #' @export
-logprior.distance<-function(m,p0=0.75,p.dist=NULL,model.strong.ase=TRUE) {
+logprior.distance <- function(
+  m,
+  p0 = 0.75,
+  p.dist = NULL,
+  model.strong.ase = TRUE
+) {
   stopifnot(p0 <= 1 & p0 >= 0)
   counts <- count.states(m, model.strong.ase)
   if (model.strong.ase) {
@@ -1398,9 +1403,9 @@ plot.gtm <- function(
 
   if (length(title.text) > 0) {
     par(mar = c(5, 7, 4, 2))
-   } else {
+  } else {
     par(mar = c(5, 7, 1, 2))
-   }
+  }
   cols <- c("white", "grey", "black", "cyan", "violet", "springgreen3")
   if (m == 1) {
     cols <- cols[1:3]
@@ -1420,7 +1425,7 @@ plot.gtm <- function(
     yaxt = "n",
     xlim = c(0, 1),
     main = title.text
-  )  
+  )
   text(
     -0.1,
     b.plot,
