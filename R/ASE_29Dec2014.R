@@ -812,11 +812,29 @@ gtm.star <- function(
         nstate[state] <- nstate[state] + 1
       }
       if (iter > burnin) {
-        state.prob[[s]][state]=1+state.prob[[s]][state]
-        state.prob[[s]][6]=state.prob[[s]][6]+((m[s]-max(as.numeric(table(gr[[s]]))))==1) #TIS_SPE
-        dist.01[[s]]=dist.01[[s]]+as.numeric(gr[[s]]==0)%*%t(as.numeric(gr[[s]]==1))+as.numeric(gr[[s]]==1)%*%t(as.numeric(gr[[s]]==0))
-        dist.02[[s]]=dist.02[[s]]+as.numeric(gr[[s]]==0)%*%t(as.numeric(gr[[s]]==2))+as.numeric(gr[[s]]==2)%*%t(as.numeric(gr[[s]]==0))
-        dist.12[[s]]=dist.12[[s]]+as.numeric(gr[[s]]==1)%*%t(as.numeric(gr[[s]]==2))+as.numeric(gr[[s]]==2)%*%t(as.numeric(gr[[s]]==1))
+        state.prob[[s]][state] <- 1 + state.prob[[s]][state]
+        state.prob[[s]][6] <- state.prob[[s]][6] + (
+          (m[s] - max(as.numeric(table(gr[[s]])))) == 1
+        ) #TIS_SPE
+        dist.01[[s]] <- (
+          dist.01[[s]]
+          + as.numeric(gr[[s]] == 0)
+          %*% t(as.numeric(gr[[s]] == 1))
+          + as.numeric(gr[[s]] == 1)
+          %*% t(as.numeric(gr[[s]] == 0))
+        )
+        dist.02[[s]] <- (
+          dist.02[[s]] + as.numeric(gr[[s]] == 0)
+          %*% t(as.numeric(gr[[s]] == 2))
+          + as.numeric(gr[[s]] == 2)
+          %*% t(as.numeric(gr[[s]] == 0))
+        )
+        dist.12[[s]] <- (
+          dist.12[[s]] + as.numeric(gr[[s]] == 1)
+          %*% t(as.numeric(gr[[s]] == 2))
+          + as.numeric(gr[[s]] == 2)
+          %*% t(as.numeric(gr[[s]] == 1))
+        )
       }
     }
     #update pi, start only after burnin
@@ -887,7 +905,7 @@ gtm.star <- function(
   mean.d <- (mean.d + t(mean.d)) / nsamples
   var.d <- (var.d + t(var.d)) / nsamples
   mean.d[!is.finite(mean.d)] <- var.d[!is.finite(mean.d)] <- NA
-  diag(mean.d) <- diag(var.d) <- 0;
+  diag(mean.d) <- diag(var.d) <- 0
   rownames(mean.d) <- colnames(mean.d) <- tissues
   rownames(var.d) <- colnames(var.d) <- tissues
   
@@ -1212,92 +1230,203 @@ count.states<-function(m,model.strong.ase=TRUE) {
   )
 }
 
-
-logprior.distance<-function(m,p0=0.75,p.dist=NULL,model.strong.ase=TRUE){
-  #Counts the prior probability for each heterogeneous state as a function of its distance. 
-  #Distance is the smallest number of changes that turns the state into one of the homogeneous states
-  #if model.strong.ase==TRUE then the maximum distance is m-ceiling(m/3),
-  #if model.strong.ase==FALSE then the maximum distance is floor(m/2),
-  #minimum distance is 1 for a heterogeneous configuration
-  #(the three homogeneous configurations have distance 0)
-  #INPUT
-  #'m' the number of tissues
-  #'p0' the joint prior probability of the 3 homogeneous states
-  #'p.dist' either a vector of length 'max.dist' of total probabilities of each
-  #         set of states for distances 1,...,'max.dist'
-  #         Where max.dist==m-ceiling(m/3) if model.strong.ase==TRUE and max.dist==floor(m/2) if model.strong.ase==FALSE.
-  #         Interpreted as relative to each other so that after renormalisation and scaling sum to (1-p0).
-  #OR, if p.dist == NULL,
-  #         then p.dist will be set uniform =(1-p0)/max.dist over the distance.
-  #OUTPUT
-  #'log.prior' is the log of prior probability of each STATE as a function of distance 1,...,max.dist
-  #            results from dividing p.dist by the number of states in each distance category
-  #'log.sum.prior.h0' is the log of the sum of priors over all heterog states that have at least one 0
-  #'log.sum.prior.h1' is the log of the sum of priors over all heterog states that have no 0
-  
-  stopifnot( p0<=1 & p0>=0 )
-  counts=count.states(m,model.strong.ase)
-  if(model.strong.ase){ndist=m-ceiling(m/3)}
-  if(!model.strong.ase){ndist=floor(m/2)}
-  if(is.null(p.dist)){
-    p.dist=rep((1-p0)/ndist,ndist)
-  }else{
-    stopifnot(length(p.dist)==ndist)
-    stopifnot(all(p.dist >= 0))
-    p.dist=(1-p0)*p.dist/sum(p.dist) #renormalise
+#' @title Log Prior Distance
+#'
+#' @description Counts the prior probability for each heterogeneous state as a function of its distance. 
+#'
+#' @details Distance is the smallest number of changes that turns the state into one of the homogeneous states
+#' if model.strong.ase==TRUE then the maximum distance is m-ceiling(m/3),
+#' if model.strong.ase==FALSE then the maximum distance is floor(m/2),
+#' minimum distance is 1 for a heterogeneous configuration
+#' (the three homogeneous configurations have distance 0)
+#'
+#' @param m the number of tissues
+#' @param p0 the joint prior probability of the 3 homogeneous states
+#' @param p.dist either a vector of length 'max.dist' of total probabilities of each
+#'   set of states for distances 1,...,'max.dist'
+#'   Where max.dist==m-ceiling(m/3) if model.strong.ase==TRUE and max.dist==floor(m/2) if model.strong.ase==FALSE.
+#'   Interpreted as relative to each other so that after renormalisation and scaling sum to (1-p0).
+#'   OR, if p.dist == NULL,
+#'     then p.dist will be set uniform =(1-p0)/max.dist over the distance.
+#' @return \describe{
+#'   \item{log.prior}{
+#'     is the log of prior probability of each STATE as a function of distance 1,...,max.dist
+#'     results from dividing p.dist by the number of states in each distance category
+#'   }
+#'   \item{log.sum.prior.h0}{is the log of the sum of priors over all heterog states that have at least one 0}
+#'   \item{log.sum.prior.h1}{is the log of the sum of priors over all heterog states that have no 0}
+#' }
+#' @export
+logprior.distance<-function(m,p0=0.75,p.dist=NULL,model.strong.ase=TRUE) {
+  stopifnot(p0 <= 1 & p0 >= 0)
+  counts <- count.states(m, model.strong.ase)
+  if (model.strong.ase) {
+    ndist <- m - ceiling(m / 3)
   }
-  log.prior=log(p.dist)-counts$logn.all #log prior for a het config as a function of distance when mass distributed among all het configs.
-  log.sum.prior.h0=log(sum(exp(counts$logn.0+log.prior)))
-  log.prior.h0=log.sum.prior.h0-log(ndist)-counts$logn.0 #log prior for a HET0 config as function of distance when distributed only among HET0
-  log.sum.prior.h1=log(sum(exp(counts$logn.1+log.prior[1:length(counts$logn.1)])))
-  log.prior.h1=log.sum.prior.h1-log(length(counts$logn.1))-counts$logn.1 #log prior for a HET1 config as function of distance when distributed only among HET1
+  if (!model.strong.ase) ndist <- floor(m / 2)
+  if (is.null(p.dist)) {
+    p.dist <- rep((1 - p0) / ndist, ndist)
+  } else {
+    stopifnot(length(p.dist) == ndist)
+    stopifnot(all(p.dist >= 0))
+    p.dist <- (1 - p0) * p.dist / sum(p.dist) #renormalise
+  }
+  log.prior <- log(p.dist) - counts[["logn.all"]] #log prior for a het config as a function of distance when mass distributed among all het configs.
+  log.sum.prior.h0 <- log(sum(exp(counts[["logn.0"]] + log.prior)))
+  log.prior.h0 <- log.sum.prior.h0 - log(ndist) - counts[["logn.0"]] #log prior for a HET0 config as function of distance when distributed only among HET0
+  log.sum.prior.h1 <- (
+    log(sum(exp(counts[["logn.1"]] + log.prior[1:length(counts[["logn.1"]])])))
+  )
+  log.prior.h1 <- (
+    log.sum.prior.h1 - log(length(counts[["logn.1"]])) - counts[["logn.1"]]
+  ) #log prior for a HET1 config as function of distance when distributed only among HET1
 
-  if(!is.finite(log.sum.prior.h1)) log.prior.h1=rep(-Inf,length(log.prior.h1))
-  
-  return(list(log.prior=log.prior,log.sum.prior.h0=log.sum.prior.h0,log.sum.prior.h1=log.sum.prior.h1,log.prior.h0=log.prior.h0,log.prior.h1=log.prior.h1))
+  if(!is.finite(log.sum.prior.h1)) log.prior.h1 <- rep(
+    -Inf,
+    length(log.prior.h1)
+  )
+  list(
+    log.prior = log.prior,
+    log.sum.prior.h0 = log.sum.prior.h0,
+    log.sum.prior.h1 = log.sum.prior.h1,
+    log.prior.h0 = log.prior.h0,
+    log.prior.h1 = log.prior.h1
+  )
 }
 
+#' @title Plot Grouped Tissue Model
+#'
+#' @description a plot
+#'
+#' @param res list, as returned by function 'gtm'
+#' @param y mx2 matrix of allele read counts, col 1 for reference allele, col 2 for non ref allele allele, uses rownames as labels if present
+#' @param title.text if present uses as a title in the plot
+#' @param print.counts if TRUE, prints out the read counts in the form NONREF/ALL, if FALSE does not print counts 
+#' @export
+plot.gtm <- function(
+  res,
+  y,
+  title.text = NULL,
+  print.counts = TRUE,
+  cex.c = 1.0
+) {
+  m <- length(y[,1])
+  if (length(rownames(y)) > 0) {
+    tissues <- rownames(y)
+  } else {
+    tissues <- paste("T", 1:m, sep = "")
+  }
+  
+  layout(
+    matrix(
+      c(3, 2, 1),
+      ncol = 1,
+      nrow = 3,
+      byrow = TRUE
+    ),
+    height = c(1.3, 2, 1),
+    width = 4
+  )
+  
+  par(mar = c(6, 5, 1, 1))
+  b.plot <- barplot(
+    as.matrix(res[["indiv.posteriors"]]),
+    beside = FALSE,
+    col = c("white", "grey", "black"),
+    ylab = "INDIVIDUAL PROB",
+    cex.lab = 1.2 * cex.c,
+    cex.axis = 1.3 * cex.c,
+    cex.main = 1.3 * cex.c,
+    xaxt = "n",
+    width = 1,
+    yaxt = "n",
+    xlim = c(0.2 + (m - 2) * 0.0375, m * 1.16)
+  )
+  text(b.plot, -0.35, tissues, srt = 45, xpd = TRUE, cex = 1.1 * cex.c)
+  axis(
+    2,
+    at = c(0, 0.25, 0.5, 0.75, 1),
+    labels = c(0, "", 0.5, "", 1),
+    cex.axis = 1.3 * cex.c
+  )
 
-plot.gtm<-function(res,y,title.text=NULL,print.counts=TRUE,cex.c=1.0){
-  #INPUT
-  #'res' list from function 'gtm'
-  #'y' mx2 matrix of allele read counts, col 1 for reference allele, col 2 for non ref allele allele, uses rownames as labels if present
-  #'title.text' if present uses as a title in the plot
-  #print.counts if TRUE, prints out the read counts in the form NONREF/ALL, if FALSE does not print counts 
-  
-  #OUTPUT
-  #a plot
-  
-  m=length(y[,1])
-  if(length(rownames(y))>0) tissues=rownames(y) else tissues=paste("T",1:m,sep="")
-  
-  layout(matrix(c(3,2,1),ncol=1,nrow=3,byrow=TRUE),height=c(1.3,2,1),width=c(4))
-  
-  par(mar=c(6,5,1,1))
-  b.plot=barplot(as.matrix(res$indiv.posteriors),beside=FALSE,col=c("white","grey","black"),ylab="INDIVIDUAL PROB",cex.lab=1.2*cex.c,cex.axis=1.3*cex.c,cex.main=1.3*cex.c,xaxt="n",width=1,yaxt="n",xlim=c(0.2+(m-2)*0.0375,m*1.16))
-  text(b.plot,-0.35,tissues,srt=45,xpd=TRUE,cex=1.1*cex.c)
-  axis(2,at=c(0,0.25,0.5,0.75,1),labels=c(0,"",0.5,"",1),cex.axis=1.3*cex.c)
-
-  par(mar=c(1,5,1,1))
-  plot(0,0,col="white",xlim=c(0,1+max(b.plot)),ylim=c(0,1),xlab="",xaxt="n",ylab="NON REF FREQ",main="",xaxs="i",yaxs="i",cex.lab=1.2*cex.c,cex.axis=1.3*cex.c,cex.main=1.3*cex.c)    
-  abline(h=0.5,lty=2)
-  coeff=1.05
-  if(m>8) coeff=1.02
-  if(m>20) coeff=1.01
-  if(m>40) coeff=1
-  for(t in 1:m){
-    x.coord=b.plot[t]*coeff
-    post.a=0.5+y[t,1];post.b=0.5+y[t,2]
-    freq=y[t,2]/sum(y[t,])
-    arrows(x.coord,qbeta(0.025,post.b,post.a),x.coord,qbeta(0.975,post.b,post.a),code=0,angle=90,lwd=1.5*cex.c)
-    points(x.coord,freq,pch=19,cex=1.5*cex.c)
-    if(print.counts) mtext(paste(y[t,2],"/",sum(y[t,]),sep=""),1,line=0.6,at=x.coord,cex=cex.c)
+  par(mar = c(1, 5, 1, 1))
+  plot(
+    0,
+    0,
+    col = "white",
+    xlim = c(0, 1 + max(b.plot)),
+    ylim = c(0, 1),
+    xlab = "",
+    xaxt = "n",
+    ylab = "NON REF FREQ",
+    main = "",
+    xaxs = "i",
+    yaxs = "i",
+    cex.lab = 1.2 * cex.c,
+    cex.axis = 1.3 * cex.c,
+    cex.main = 1.3 * cex.c
+  )
+  abline(h = 0.5, lty = 2)
+  coeff = 1.05
+  if (m > 8) coeff = 1.02
+  if (m > 20) coeff = 1.01
+  if (m > 40) coeff = 1
+  for (t in 1:m) {
+    x.coord <- b.plot[t] * coeff
+    post.a <- 0.5 + y[t,1]
+    post.b <- 0.5 + y[t,2]
+    freq <- y[t, 2] / sum(y[t,])
+    arrows(
+      x.coord,
+      qbeta(0.025, post.b, post.a),
+      x.coord,
+      qbeta(0.975, post.b, post.a),
+      code = 0,
+      angle = 90,
+      lwd = 1.5 * cex.c
+    )
+    points(x.coord, freq, pch = 19, cex = 1.5 * cex.c)
+    if (print.counts) mtext(
+      paste(y[t, 2], "/", sum(y[t,]), sep = ""),
+      1,
+      line = 0.6,
+      at = x.coord,
+      cex = cex.c
+    )
   }
 
-  if(length(title.text) > 0) par(mar=c(5,7,4,2)) else  par(mar=c(5,7,1,2))
-  cols=c("white","grey","black","cyan","violet","springgreen3")
-  if(m==1) cols=cols[1:3]
-  b.plot=barplot(rev(as.matrix(res$state.posteriors)),horiz=TRUE,beside=TRUE,col=rev(cols),ylab="",cex.lab=1.2*cex.c,cex.axis=1.3*cex.c,cex.main=2*cex.c,xlab="STATE PROBABILITIES",yaxt="n",xlim=c(0,1),main=title.text)  
-  text(-0.1,b.plot,rev(names(res$state.posteriors)),srt=0,xpd=TRUE,cex=1.2*cex.c)
-  
+  if (length(title.text) > 0) {
+    par(mar = c(5, 7, 4, 2))
+   } else {
+    par(mar = c(5, 7, 1, 2))
+   }
+  cols <- c("white", "grey", "black", "cyan", "violet", "springgreen3")
+  if (m == 1) {
+    cols <- cols[1:3]
+  }
+  b.plot <- barplot(
+    rev(
+      as.matrix(res$state.posteriors)
+    ),
+    horiz = TRUE,
+    beside = TRUE,
+    col = rev(cols),
+    ylab = "",
+    cex.lab = 1.2 * cex.c,
+    cex.axis = 1.3 * cex.c,
+    cex.main = 2 * cex.c,
+    xlab = "STATE PROBABILITIES",
+    yaxt = "n",
+    xlim = c(0, 1),
+    main = title.text
+  )  
+  text(
+    -0.1,
+    b.plot,
+    rev(names(res[["state.posteriors"]])),
+    srt = 0,
+    xpd = TRUE,
+    cex = 1.2 * cex.c
+  )
 }
