@@ -120,7 +120,6 @@ gtm <- function(
     p.dist = pr.dist,
     model.strong.ase = model.strong.ase
   )
-  print(log.prior.dist[["log.prior"]])
   if (model.strong.ase) {
     log.prior <- c(log(pr.p0 / 3), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/3, otherwise from 'logprior.distance'
   } else {
@@ -690,12 +689,11 @@ gtm.star <- function(
   stopifnot(model.strong.ase | length(pr.intv) %in% c(4, 6))
  
   stopifnot(is.logical(two.sided) & is.logical(independent))
-  stopifnot(all(unlist(lapply(y.list,ncol))==2))
-  if(!model.strong.ase & length(pr.pi)==3) pr.pi[4]=pr.pi[3] #copy from 3 to 4 and use only 1,2 and 4 below
-  stopifnot(all(pr.pi>0) & length(pr.pi) %in% c(4,5))
-  stopifnot(!model.strong.ase | length(group.distance)==3)
-  if(!model.strong.ase) {
-    group.distance=rep(1,3)} #d(G0,G1)=1 when only two groups present
+  stopifnot(all(unlist(lapply(y.list, ncol)) == 2))
+  if (!model.strong.ase & length(pr.pi) == 3) pr.pi[4] <- pr.pi[3] #copy from 3 to 4 and use only 1,2 and 4 below
+  stopifnot(all(pr.pi > 0) & length(pr.pi) %in% c(4, 5))
+  stopifnot(!model.strong.ase | length(group.distance) == 3)
+  if (!model.strong.ase) group.distance <- rep(1, 3) #d(G0,G1)=1 when only two groups present
 
   nsets <- length(y.list)
   m <- unlist(lapply(y.list, nrow))
@@ -1180,7 +1178,7 @@ logmlk.3.truncated <- function(
 #'   \item{logn.1{log of the number of heterogeneous states belonging to category HET1, i.e. none in 0.}
 #' }
 #' @export
-count.states<-function(m,model.strong.ase=TRUE) {
+count.states <- function(m, model.strong.ase = TRUE) {
   if (!model.strong.ase) { #only two groups, all heterogeneous belong to HET0 and non to HET1
     logn.all <- rep(NA,floor(m / 2))
     if (m > 2) {
@@ -1272,8 +1270,9 @@ logprior.distance <- function(
   counts <- count.states(m, model.strong.ase)
   if (model.strong.ase) {
     ndist <- m - ceiling(m / 3)
+  } else {
+    ndist <- floor(m / 2)
   }
-  if (!model.strong.ase) ndist <- floor(m / 2)
   if (is.null(p.dist)) {
     p.dist <- rep((1 - p0) / ndist, ndist)
   } else {
@@ -1281,6 +1280,7 @@ logprior.distance <- function(
     stopifnot(all(p.dist >= 0))
     p.dist <- (1 - p0) * p.dist / sum(p.dist) #renormalise
   }
+  print(p.dist)
   log.prior <- log(p.dist) - counts[["logn.all"]] #log prior for a het config as a function of distance when mass distributed among all het configs.
   log.sum.prior.h0 <- log(sum(exp(counts[["logn.0"]] + log.prior)))
   log.prior.h0 <- log.sum.prior.h0 - log(ndist) - counts[["logn.0"]] #log prior for a HET0 config as function of distance when distributed only among HET0
