@@ -69,64 +69,10 @@ prior.pi <- rep(1,5)
 group.distance <- c(1, 1, 0.5)
 ```
 
-```{r apply_gtm}
-res.list <- list() #will be results from single variant analyses
-posteriors <- rep(0, 6) #combined state probabilities from single var analyses
-pr.p0 = 0.75
-model.strong.ase = TRUE
-pr.dist = NULL
-for(i in 1:nv) {
-  y <- y.list[[i]]
-  m <- nrow(y)
-  log.prior.dist <- logprior.distance(
-    m,
-    p0 = pr.p0,
-    p.dist = pr.dist,
-    model.strong.ase = model.strong.ase
-  )
-  if (model.strong.ase) {
-    log.prior <- c(log(pr.p0 / 3), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/3, otherwise from 'logprior.distance'
-  } else {
-    log.prior <- c(log(pr.p0 / 2), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/2, otherwise from 'logprior.distance'
-  }
-  log.sum.prior.h0 <- log.prior.dist[["log.sum.prior.h0"]]
-  log.sum.prior.h1 <- log.prior.dist[["log.sum.prior.h1"]]
-  for (i in 1) {
-    y <- matrix(y[i,], nrow = 1)
-    logmlk <- rep(-Inf, 3)
-    #prior for each state is the same
-    possible.groups <- 0:2
-    if (!model.strong.ase) possible.groups <- 0:1
-    for (gr in possible.groups) {
-      logmlk[gr + 1] <- logmlk.3.truncated(
-        y = y,
-        gr = gr,
-        pr.beta = pr.beta,
-        pr.intv = pr.intv,
-        two.sided = two.sided,
-        independent = TRUE
-      )
-      j <- min(which(is.finite(logmlk)))
-      log10bfs <- data.frame(matrix((logmlk - logmlk[j]) / log(10), nrow = 1))
-      names(log10bfs) <- c("NOASE", "MODASE", "SNGASE")
-      posteriors <- log10bfs
-      posteriors <- 10^(log10bfs - max(log10bfs))
-      posteriors <- data.frame(matrix(posteriors / sum(posteriors), nrow = 1))
-      names(posteriors) <- c("NOASE", "MODASE", "SNGASE")
-      prob <- matrix(data.matrix(posteriors), ncol = 1)
-      rownames(prob) <- c("NOASE", "MODASE", "SNGASE")
-      colnames(prob) <- rownames(y)
-    }
-  }
-}
-prob
-```
-
 ```{r apply_gtm_backup}
 res.list <- list() #will be results from single variant analyses
 posteriors <- rep(0, 6) #combined state probabilities from single var analyses
 for(i in 1:nv) {
-  print(y.list[[i]])
   res.list[[i]] <- gtm(
     y.list[[i]],
     pr.beta = pr.beta,

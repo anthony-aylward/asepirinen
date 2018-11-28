@@ -211,6 +211,8 @@ gtm <- function(
 
   in.state <- in.state / niter #currently not returned, as marginal likelihood based posteriors are returned instead
   
+  print(log.prior)
+
   hets <- gtm.het(
     y,
     prob,
