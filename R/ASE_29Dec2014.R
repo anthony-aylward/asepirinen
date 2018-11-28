@@ -393,6 +393,7 @@ gtm <- function(
       two.sided = two.sided,
       independent = independent
     )
+  }
   logmlk.state[7] <- logmlk.3.truncated(
     y = y,
     gr = top.gr.het,
@@ -437,7 +438,9 @@ gtm <- function(
         logprlk <- c(logprlk, logmlk.d1[ind] + log.prior[2]) #need to add prior for d==1 state here but not in logmlk.d1 above
         #print(c(paste(gr,collapse=""),logmlk.d1[ind]+log.prior[2]))
         ind <- ind + 1
-  }}}
+      }
+    }
+  }
   if (!is.finite(max(logmlk.d1))) {
     logmlk.state[6] <- -Inf
   } else {

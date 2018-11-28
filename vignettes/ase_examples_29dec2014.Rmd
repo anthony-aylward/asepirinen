@@ -1,0 +1,99 @@
+---
+title: "Vignette Title"
+author: "Vignette Author"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# GTM Examples
+
+Examples how to use GTM and GTM* from paper  "Assessing allele-specific expression across multiple tissues from RNA-seq read data"
+
+Import the package
+```{r import_package}
+library(asepirinen)
+```
+
+Generate some data
+```{r generate_data}
+nv=40 #number of variants
+nt=sample(5:10,replace=TRUE,size=nv,prob=rep(1,6)) #number of tissues for each variant
+nreads=20 #number of reads per each tissue
+states=sample(c(1:5),size=nv,replace=TRUE,prob=c(1,0,0,1,0.5)) #true state for each variant
+
+theta=c(0.5,0.25,0.01) #non ref allele freq for each group (1=NOASE ,2=MODASE or 3=SNGASE)
+
+y.list=list()
+true.groups=list()
+for(set in 1:nv){
+  if(states[set] %in% c(1:3)) groups=rep(states[set],nt[set])
+  if(states[set]==4) groups=c(rep(1,3),rep(2,nt[set]-3))#HET0
+  if(states[set]==5) groups=c(rep(3,3),rep(2,nt[set]-3))#HET1
+  groups=sample(groups)
+  true.groups[[set]]=groups
+  y=rep(NA,nt[set])
+  for(i in 1:nt[set]){y[i]=rbinom(1,size=nreads,prob=theta[groups[i]])}
+  y=cbind(nreads-y,y)
+  rownames(y)=paste("T",1:nt[set],sep="")
+  y.list[[set]]=y
+}
+```
+
+Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+
+- Never uses retina figures
+- Has a smaller default figure size
+- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+
+## Vignette Info
+
+Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))
