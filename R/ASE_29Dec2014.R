@@ -525,9 +525,10 @@ gtm <- function(
     )
     if (m > 2) {
       log10.prior.d1 <- (log.prior[2] + log(2 * m)) / log(10)
-   } else {
-     log10.prior.d1 <- (log.prior[2] + log(2)) / log(10)
-   }
+    } else {
+      log10.prior.d1 <- (log.prior[2] + log(2)) / log(10)
+    }
+  }
  
   posteriors <- log10.prior.states + log10bfs[1, 1:5]
   posteriors <- 10^(posteriors - max(posteriors))
