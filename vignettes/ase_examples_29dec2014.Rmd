@@ -1,6 +1,6 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "GTM examples"
+author: "Matti Pirinen 29-Dec-2014"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -21,79 +21,126 @@ knitr::opts_chunk$set(
 Examples how to use GTM and GTM* from paper  "Assessing allele-specific expression across multiple tissues from RNA-seq read data"
 
 Import the package
+
 ```{r import_package}
 library(asepirinen)
 ```
 
 Generate some data
+
 ```{r generate_data}
-nv=40 #number of variants
-nt=sample(5:10,replace=TRUE,size=nv,prob=rep(1,6)) #number of tissues for each variant
-nreads=20 #number of reads per each tissue
-states=sample(c(1:5),size=nv,replace=TRUE,prob=c(1,0,0,1,0.5)) #true state for each variant
+nv <- 40 #number of variants
+nt <- sample(5:10, replace = TRUE, size = nv, prob = rep(1, 6)) #number of tissues for each variant
+nreads <- 20 #number of reads per each tissue
+states <- sample(1:5, size = nv, replace = TRUE, prob = c(1, 0, 0, 1, 0.5)) #true state for each variant
 
-theta=c(0.5,0.25,0.01) #non ref allele freq for each group (1=NOASE ,2=MODASE or 3=SNGASE)
+theta <- c(0.5, 0.25, 0.01) #non ref allele freq for each group (1=NOASE ,2=MODASE or 3=SNGASE)
 
-y.list=list()
-true.groups=list()
+y.list <- list()
+true.groups <- list()
 for(set in 1:nv){
-  if(states[set] %in% c(1:3)) groups=rep(states[set],nt[set])
-  if(states[set]==4) groups=c(rep(1,3),rep(2,nt[set]-3))#HET0
-  if(states[set]==5) groups=c(rep(3,3),rep(2,nt[set]-3))#HET1
-  groups=sample(groups)
-  true.groups[[set]]=groups
-  y=rep(NA,nt[set])
-  for(i in 1:nt[set]){y[i]=rbinom(1,size=nreads,prob=theta[groups[i]])}
-  y=cbind(nreads-y,y)
-  rownames(y)=paste("T",1:nt[set],sep="")
-  y.list[[set]]=y
+  if (states[set] %in% c(1:3)) groups <- rep(states[set], nt[set])
+  if (states[set] == 4) groups <- c(rep(1, 3), rep(2, nt[set] - 3)) #HET0
+  if (states[set] == 5) groups <- c(rep(3, 3), rep(2, nt[set] - 3)) #HET1
+  groups <- sample(groups)
+  true.groups[[set]] <- groups
+  y <- rep(NA, nt[set])
+  for (i in 1:nt[set]) {
+    y[i] = rbinom(1, size = nreads, prob = theta[groups[i]])
+  }
+  y <- cbind(nreads-y,y)
+  rownames(y) <- paste("T", 1:nt[set], sep = "")
+  y.list[[set]] <- y
 }
+y.list
 ```
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+Set parameters
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
-
-## Vignette Info
-
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
-
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+```{r set_parameters}
+pr.beta <- c(2000, 2000, 36, 12, 80, 1)
+#pr.intv <- c(0.48, 0.52, 0.52, 0.95, 0.95, 1) #truncate to intervals
+pr.intv <- rep(NA, 6) #do not truncate
+indp <- FALSE #independent frequencies among tissues in same group?
+two.sided <- FALSE #two sided frequency distributions?
+niter <- 100
+burnin <- 10
+prior.pi <- rep(1,5)
+group.distance <- c(1, 1, 0.5)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+```{r apply_gtm}
+res.list <- list() #will be results from single variant analyses
+posteriors <- rep(0, 6) #combined state probabilities from single var analyses
+pr.p0 = 0.75
+model.strong.ase = TRUE
+pr.dist = NULL
+for(i in 1:nv) {
+  y <- y.list[[i]]
+  m <- nrow(y)
+  log.prior.dist <- logprior.distance(
+    m,
+    p0 = pr.p0,
+    p.dist = pr.dist,
+    model.strong.ase = model.strong.ase
+  )
+  if (model.strong.ase) {
+    log.prior <- c(log(pr.p0 / 3), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/3, otherwise from 'logprior.distance'
+  } else {
+    log.prior <- c(log(pr.p0 / 2), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/2, otherwise from 'logprior.distance'
+  }
+  log.sum.prior.h0 <- log.prior.dist[["log.sum.prior.h0"]]
+  log.sum.prior.h1 <- log.prior.dist[["log.sum.prior.h1"]]
+  for (i in 1) {
+    y <- matrix(y[i,], nrow = 1)
+    logmlk <- rep(-Inf, 3)
+    #prior for each state is the same
+    possible.groups <- 0:2
+    if (!model.strong.ase) possible.groups <- 0:1
+    for (gr in possible.groups) {
+      logmlk[gr + 1] <- logmlk.3.truncated(
+        y = y,
+        gr = gr,
+        pr.beta = pr.beta,
+        pr.intv = pr.intv,
+        two.sided = two.sided,
+        independent = TRUE
+      )
+      j <- min(which(is.finite(logmlk)))
+      log10bfs <- data.frame(matrix((logmlk - logmlk[j]) / log(10), nrow = 1))
+      names(log10bfs) <- c("NOASE", "MODASE", "SNGASE")
+      posteriors <- log10bfs
+      posteriors <- 10^(log10bfs - max(log10bfs))
+      posteriors <- data.frame(matrix(posteriors / sum(posteriors), nrow = 1))
+      names(posteriors) <- c("NOASE", "MODASE", "SNGASE")
+      prob <- matrix(data.matrix(posteriors), ncol = 1)
+      rownames(prob) <- c("NOASE", "MODASE", "SNGASE")
+      colnames(prob) <- rownames(y)
+    }
+  }
+}
+prob
 ```
 
-Also a quote using `>`:
+```{r apply_gtm_backup}
+res.list <- list() #will be results from single variant analyses
+posteriors <- rep(0, 6) #combined state probabilities from single var analyses
+for(i in 1:nv) {
+  print(y.list[[i]])
+  res.list[[i]] <- gtm(
+    y.list[[i]],
+    pr.beta = pr.beta,
+    pr.intv = pr.intv,
+    niter = niter,
+    burnin = burnin,
+    two.sided = two.sided,
+    independent = indp
+  )
+  posteriors <- posteriors + as.numeric(res.list[[i]][["state.posteriors"]])
+}
+posteriors <- posteriors / nv
+posteriors
+```
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+
+

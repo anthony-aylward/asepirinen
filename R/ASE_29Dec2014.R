@@ -966,7 +966,7 @@ gtm.single <- function(
   #prior for each state is the same
   possible.groups <- 0:2
   if (!model.strong.ase) possible.groups <- 0:1
-  for(gr in possible.groups) {
+  for (gr in possible.groups) {
     logmlk[gr + 1] <- logmlk.3.truncated(
       y = y,
       gr = gr,
@@ -983,7 +983,7 @@ gtm.single <- function(
   posteriors <- 10^(log10bfs - max(log10bfs))
   posteriors <- data.frame(matrix(posteriors / sum(posteriors), nrow = 1))
   names(posteriors) <- c("NOASE", "MODASE", "SNGASE")
-  prob <- matrix(posteriors[1,], ncol = 1)
+  prob <- matrix(data.matrix(posteriors), ncol = 1)
   rownames(prob) <- c("NOASE", "MODASE", "SNGASE")
   colnames(prob) <- rownames(y)
   parameters <- list(
