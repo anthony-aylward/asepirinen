@@ -545,7 +545,7 @@ gtm <- function(
       c(
         1,
         10^(
-          log10(posteriors[1, i])
+          log10(data.matrix(posteriors[1, i]))
           + log10bfs[1, 6]
           - log10bfs[1, i]
           + log10.prior.d1
