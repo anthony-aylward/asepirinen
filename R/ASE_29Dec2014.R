@@ -130,18 +130,20 @@ gtm <- function(
 
   gr <- rep(0, m)
   for (i in 1:m) {
-    gr[i] <- which.max(
-      as.numeric(
-        gtm.single(
-          matrix(y[i,], nrow = 1),
-          pr.beta,
-          pr.intv,
-          two.sided,
-          model.strong.ase
-        )[["indiv.posteriors"]]
+    gr[i] <- (
+      which.max(
+        as.numeric(
+          gtm.single(
+            matrix(y[i,], nrow = 1),
+            pr.beta,
+            pr.intv,
+            two.sided,
+            model.strong.ase
+          )[["indiv.posteriors"]]
+        )
       )
+      - 1
     )
-    - 1
   }
   #group indicators, start everything from marginally top state
   #print(gr)
