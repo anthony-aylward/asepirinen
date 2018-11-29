@@ -48,7 +48,7 @@ for(set in 1:nv){
   for (i in 1:nt[set]) {
     y[i] = rbinom(1, size = nreads, prob = theta[groups[i]])
   }
-  y <- cbind(nreads-y,y)
+  y <- cbind(nreads - y, y)
   rownames(y) <- paste("T", 1:nt[set], sep = "")
   y.list[[set]] <- y
 }
