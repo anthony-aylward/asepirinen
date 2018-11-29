@@ -1083,8 +1083,6 @@ logmlk.3.truncated <- function(
 ) {
   #stopifnot(length(pr.intv)==6)
   #stopifnot(length(pr.beta)==6)
-  
-  print(gr)
 
   stopifnot(all(gr %in% c(0, 1, 2)))
   
@@ -1282,7 +1280,6 @@ logprior.distance <- function(
     stopifnot(all(p.dist >= 0))
     p.dist <- (1 - p0) * p.dist / sum(p.dist) #renormalise
   }
-  print(p.dist)
   log.prior <- log(p.dist) - counts[["logn.all"]] #log prior for a het config as a function of distance when mass distributed among all het configs.
   log.sum.prior.h0 <- log(sum(exp(counts[["logn.0"]] + log.prior)))
   log.prior.h0 <- log.sum.prior.h0 - log(ndist) - counts[["logn.0"]] #log prior for a HET0 config as function of distance when distributed only among HET0
