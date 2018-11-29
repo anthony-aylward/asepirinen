@@ -538,7 +538,7 @@ gtm <- function(
   posteriors <- log10.prior.states + log10bfs[1, 1:5]
   posteriors <- 10^(posteriors - max(posteriors))
   posteriors <- data.frame(matrix(posteriors / sum(posteriors), nrow = 1))
-  i <- which.max(as.numeric(posteriors[1,]))
+  i <- which.max(as.numeric(data.matrix(posteriors[1,])))
   print(posteriors)
   print(i)
   print(as.numeric(data.matrix(posteriors[1,])))
