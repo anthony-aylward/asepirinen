@@ -1228,9 +1228,9 @@ count.states <- function(m, model.strong.ase = TRUE) {
     )
   }
   list(
-    logn.0 <- logn.0,
-    logn.1 <- logn.1,
-    logn.all <- logn.all
+    logn.0 = logn.0,
+    logn.1 = logn.1,
+    logn.all = logn.all
   )
 }
 
