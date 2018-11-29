@@ -120,6 +120,7 @@ gtm <- function(
     p.dist = pr.dist,
     model.strong.ase = model.strong.ase
   )
+  print(log.prior.dist[["log.prior"]])
   if (model.strong.ase) {
     log.prior <- c(log(pr.p0 / 3), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/3, otherwise from 'logprior.distance'
   } else {
