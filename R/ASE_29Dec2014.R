@@ -1269,6 +1269,7 @@ logprior.distance <- function(
 ) {
   stopifnot(p0 <= 1 & p0 >= 0)
   counts <- count.states(m, model.strong.ase)
+  print(counts)
   if (model.strong.ase) {
     ndist <- m - ceiling(m / 3)
   } else {
