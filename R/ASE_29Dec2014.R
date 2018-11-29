@@ -163,7 +163,6 @@ gtm <- function(
       gr.t <- gr; #temporary grouping
       for(gr.i in possible.groups) { #tissue t belongs to group gr.i
         gr.t[t] <- gr.i;
-        print(gr.t)
         loglk[gr.i + 1] <- logmlk.3.truncated(
           y = y,
           gr = gr.t,
@@ -213,8 +212,6 @@ gtm <- function(
   colnames(distances) <- rownames(y)
 
   in.state <- in.state / niter #currently not returned, as marginal likelihood based posteriors are returned instead
-  
-  print(log.prior)
 
   hets <- gtm.het(
     y,
@@ -549,9 +546,9 @@ gtm <- function(
         1,
         10^(
           log10(posteriors[1, i])
-          + log10bfs[1,6]
-          - log10bfs[1,i]
-          + log10.prior.d
+          + log10bfs[1, 6]
+          - log10bfs[1, i]
+          + log10.prior.d1
           - log10.prior.states[i]
         )
       )
