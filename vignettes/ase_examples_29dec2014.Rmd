@@ -53,6 +53,10 @@ for(set in 1:nv){
   y.list[[set]] <- y
 }
 y.list
+y <- c(0, 5, 1, 2, 4, 1)
+y <- cbind(20 - y, y)
+rownames(y) <- paste("T", 1:6, sep = "")
+y.list[[1]] <- y
 ```
 
 Set parameters

@@ -120,7 +120,6 @@ gtm <- function(
     p.dist = pr.dist,
     model.strong.ase = model.strong.ase
   )
-  print(log.prior.dist[["log.prior"]])
   if (model.strong.ase) {
     log.prior <- c(log(pr.p0 / 3), log.prior.dist[["log.prior"]]) #for states with dist==0 prior is pr.p0/3, otherwise from 'logprior.distance'
   } else {
@@ -1269,7 +1268,6 @@ logprior.distance <- function(
 ) {
   stopifnot(p0 <= 1 & p0 >= 0)
   counts <- count.states(m, model.strong.ase)
-  print(counts)
   if (model.strong.ase) {
     ndist <- m - ceiling(m / 3)
   } else {
