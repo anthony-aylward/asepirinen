@@ -161,6 +161,7 @@ gtm <- function(
       gr.t <- gr; #temporary grouping
       for(gr.i in possible.groups) { #tissue t belongs to group gr.i
         gr.t[t] <- gr.i;
+        print(gr.t)
         loglk[gr.i + 1] <- logmlk.3.truncated(
           y = y,
           gr = gr.t,
@@ -1083,7 +1084,6 @@ logmlk.3.truncated <- function(
 ) {
   #stopifnot(length(pr.intv)==6)
   #stopifnot(length(pr.beta)==6)
-  print(gr)
   stopifnot(all(gr %in% c(0, 1, 2)))
   
   loglk <- 0
