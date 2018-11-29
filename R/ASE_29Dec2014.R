@@ -1081,9 +1081,11 @@ logmlk.3.truncated <- function(
   two.sided,
   independent
 ) {
-
   #stopifnot(length(pr.intv)==6)
   #stopifnot(length(pr.beta)==6)
+  
+  print(gr)
+
   stopifnot(all(gr %in% c(0, 1, 2)))
   
   loglk <- 0
