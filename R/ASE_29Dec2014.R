@@ -541,7 +541,7 @@ gtm <- function(
   i <- which.max(as.numeric(posteriors[1,]))
   print(posteriors)
   print(i)
-  print(as.numeric(posteriors[1,]))
+  print(as.numeric(data.matrix(posteriors[1,])))
   print(log10(posteriors[1, i]))
   print(log10bfs[1, 6])
   print(log10bfs[1, i])
