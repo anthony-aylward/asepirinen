@@ -69,11 +69,11 @@ indp <- FALSE #independent frequencies among tissues in same group?
 two.sided <- FALSE #two sided frequency distributions?
 niter <- 100
 burnin <- 10
-prior.pi <- rep(1,5)
+prior.pi <- rep(1, 5)
 group.distance <- c(1, 1, 0.5)
 ```
 
-```{r apply_gtm_backup}
+```{r posteriors}
 res.list <- list() #will be results from single variant analyses
 posteriors <- rep(0, 6) #combined state probabilities from single var analyses
 for(i in 1:nv) {
@@ -89,8 +89,88 @@ for(i in 1:nv) {
   posteriors <- posteriors + as.numeric(res.list[[i]][["state.posteriors"]])
 }
 posteriors <- posteriors / nv
-posteriors
+res.list[[1]][["state.posteriors"]]
 ```
+
+apply hierarchical model:
+
+```{r heirarchical_model}
+hm.res <- gtm.star(
+  y.list,
+  pr.beta = pr.beta,
+  pr.intv = pr.intv,
+  pr.pi = prior.pi,
+  niter = niter,
+  burnin = burnin,
+  two.sided = two.sided,
+  independent = indp
+)
+
+sing.res <- matrix(NA, nrow = 5, ncol = 3) #matrix with 95% intervals for single variant analyses
+sing.res[,1] <- c(posteriors[1:5]) #,sum(posteriors[4:5]))
+sing.res[,2] <- sing.res[, 1] - 1.96 * sqrt(
+  sing.res[,1] * (1 - sing.res[,1]) / nv
+)
+sing.res[sing.res[,2] < 0, 2] <- 0
+sing.res[,3] <- sing.res[, 1] + 1.96 * sqrt(
+  sing.res[,1] * (1 - sing.res[,1]) / nv
+)
+
+plot(
+  0,
+  xlim = c(0, 6),
+  ylim = c(0, 1),
+  col = "white",
+  xlab = "state",
+  ylab = "pi",
+  xaxt = "n"
+)
+axis(
+  1,
+  at = c(1:5),
+  labels = c("NOASE", "MODASE", "SNGASE", "HET0", "HET1")
+)
+for(i in 1:5) {
+  points(i - 0.2, hm.res$prop.posteriors[i, 1], pch = 19, col = "springgreen")
+  points(i + 0.2, sing.res[i,1], pch = 19, col = "blue")
+  arrows(
+    i - 0.2,
+    hm.res$prop.posteriors[i, 2],
+    i - 0.2,
+    hm.res$prop.posteriors[i, 3],
+    code = 3,
+    angle = 90,
+    length = 0.1
+  )
+  arrows(
+    i + 0.2,
+    sing.res[i, 2],
+    i + 0.2, sing.res[i, 3],
+    code = 3,
+    angle = 90,
+    length = 0.1
+  )
+  points(
+    i,
+    as.numeric((table(states) / nv)[as.character(i)]),
+    pch = "X",
+    col = "red"
+  ) #plot true values
+}
+
+hm.res$prop.posteriors[,1] #state probabilities from hierarchical model
+round(
+  apply(
+    matrix(unlist(hm.res$state.posteriors), byrow = TRUE, ncol = 6),
+    2,
+    mean
+  ),
+  2
+) #another version from hier model, 6th state=TISSUE SPECIFIC
+round(posteriors, 2) #single var analyses, 6th state=TISSUE SPECIFIC
+table(states) / nv #true proportions
+```
+
 
 
 
