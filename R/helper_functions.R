@@ -2,6 +2,13 @@
 # helper_functions.R
 #===============================================================================
 
+# Imports ======================================================================
+
+#' @import parallel
+#' @import plyr
+
+# Functions ====================================================================
+
 #' @title Apply GTM to individual variants
 #'
 #' @description Apply GTM to each of a list of variants
