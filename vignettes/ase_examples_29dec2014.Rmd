@@ -170,7 +170,3 @@ round(
 round(posteriors, 2) #single var analyses, 6th state=TISSUE SPECIFIC
 table(states) / nv #true proportions
 ```
-
-
-
-
