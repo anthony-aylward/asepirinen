@@ -29,9 +29,9 @@ apply_gtm_per_variant <- function(
   counts,
   pr_beta = c(2000, 2000, 36, 12, 80, 1),
   pr_intv = rep(NA, 6),
-  niter = 100,
+  niter = 2000,
   burnin = 10,
-  two_sided = FALSE,
+  two_sided = TRUE,
   independent = FALSE,
   cores = 1
 ) {
