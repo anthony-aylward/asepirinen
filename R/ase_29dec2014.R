@@ -823,22 +823,18 @@ gtm.star <- function(
         ) #TIS_SPE
         dist.01[[s]] <- (
           dist.01[[s]]
-          + as.numeric(gr[[s]] == 0)
-          %*% t(as.numeric(gr[[s]] == 1))
-          + as.numeric(gr[[s]] == 1)
-          %*% t(as.numeric(gr[[s]] == 0))
+          + as.numeric(gr[[s]] == 0) %*% t(as.numeric(gr[[s]] == 1))
+          + as.numeric(gr[[s]] == 1) %*% t(as.numeric(gr[[s]] == 0))
         )
         dist.02[[s]] <- (
-          dist.02[[s]] + as.numeric(gr[[s]] == 0)
-          %*% t(as.numeric(gr[[s]] == 2))
-          + as.numeric(gr[[s]] == 2)
-          %*% t(as.numeric(gr[[s]] == 0))
+          dist.02[[s]]
+          + as.numeric(gr[[s]] == 0) %*% t(as.numeric(gr[[s]] == 2))
+          + as.numeric(gr[[s]] == 2) %*% t(as.numeric(gr[[s]] == 0))
         )
         dist.12[[s]] <- (
-          dist.12[[s]] + as.numeric(gr[[s]] == 1)
-          %*% t(as.numeric(gr[[s]] == 2))
-          + as.numeric(gr[[s]] == 2)
-          %*% t(as.numeric(gr[[s]] == 1))
+          dist.12[[s]]
+          + as.numeric(gr[[s]] == 1) %*% t(as.numeric(gr[[s]] == 2))
+          + as.numeric(gr[[s]] == 2) %*% t(as.numeric(gr[[s]] == 1))
         )
       }
     }
@@ -898,9 +894,7 @@ gtm.star <- function(
         diag(v.mat) <- p.vec * (1 - p.vec)
         var.d[i.ind,j.ind] <- (
           var.d[i.ind,j.ind]
-          + t(c(0,group.distance))
-          %*% v.mat
-          %*% c(0,group.distance)
+          + t(c(0,group.distance)) %*% v.mat %*% c(0, group.distance)
         )
         nsamples[i.ind, j.ind] <- nsamples[i.ind, j.ind] + 1
       }
